@@ -39,7 +39,7 @@ class DocxController extends Symfony\Bundle\FrameworkBundle\ControllerAbstractCo
                 );
       return $this->file(
               $docxFile,
-              'Name of the file
+              'Name of the file'
           )
               ->deleteFileAfterSend(true);
   }
