@@ -12,6 +12,7 @@ class DocxTwigRenderService
 {
     private const WORD_QUOTES =
         [
+            '‚',
             '„',
             '‘',
             '`',
