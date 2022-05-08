@@ -11,8 +11,8 @@ use Symfony\Component\HttpFoundation\File\File;
 class DocxStringRenderService
 {
     private const REGEX = '|\${([^}]+)}|U';
-    private ?File $newFile = null;
     private ?DocxService $docxService = null;
+    private ?File $newFile = null;
 
     public function cleanXmlDocument(XmlDocument $xmlDocument): void
     {
@@ -33,13 +33,8 @@ class DocxStringRenderService
         do {
             $hit = false;
             foreach ($fields as $field) {
-                try {
-                    $this->cloneRow($field, $numberOfClones);
-                    $hit = true;
-                    break;
-                } catch (RuntimeException $e) {
-                    $hit = false;
-                }
+                $hit = $this->cloneRow($field, $numberOfClones);
+                break;
             }
         } while ($hit === true);
     }
@@ -118,71 +113,77 @@ class DocxStringRenderService
         }
     }
 
-    private function cloneRow(string $field, int $numberOfClones): void
+    private function cloneRow(string $field, int $numberOfClones): bool
     {
+        $hit = false;
         foreach ($this->docxService->getXmlDocuments() as $document) {
-            $field = $this->normaliseStartTag($field);
+            try {
+                $field = $this->normaliseStartTag($field);
 
-            if (($tagPos = mb_strpos($document->getContent(), $field)) === false) {
-                throw new RuntimeException
-                (
-                    'Can not clone row, template variable not found ' .
-                    'or variable contains markup.'
-                );
-            }
-
-            $rowStart = $this->findRowStart($document->getContent(), $tagPos);
-            $rowEnd = $this->findRowEnd($document->getContent(), $tagPos);
-            if ($rowEnd < $rowStart || empty($rowStart) || empty($rowEnd)) {
-                throw new RuntimeException
-                (
-                    'Can not clone row, template variable not found ' .
-                    'or variable contains markup.'
-                );
-            }
-            $xmlRow = mb_substr($document->getContent(), $rowStart, $rowEnd - $rowStart);
-
-            // Check if there's a cell spanning multiple rows.
-            if (preg_match('#<w:vMerge w:val="restart"/>#', $xmlRow)) {
-                $extraRowEnd = $rowEnd;
-
-                while (true) {
-                    $extraRowStart = $this->findRowStart($document->getContent(), $extraRowEnd + 1);
-                    $extraRowEnd = $this->findRowEnd($document->getContent(), $extraRowEnd + 1);
-
-                    // If extraRowEnd is lower then 7, there was no next row found.
-                    if ($extraRowEnd < 7) {
-                        break;
-                    }
-
-                    // If tmpXmlRow doesn't contain continue,
-                    // this row is no longer part of the spanned row.
-                    $tmpXmlRow = mb_substr($document->getContent(), $extraRowStart, $extraRowEnd);
-                    if(
-                        !preg_match('#<w:vMerge/>#', $tmpXmlRow) &&
-                        !preg_match('#<w:vMerge w:val="continue" />#', $tmpXmlRow)
-                    ) {
-                        break;
-                    }
-
-                    // This row was a spanned row,
-                    // update $rowEnd and search for the next row.
-                    $rowEnd = $extraRowEnd;
+                if (($tagPos = mb_strpos($document->getContent(), $field)) === false) {
+                    throw new RuntimeException
+                    (
+                        'Can not clone row, template variable not found ' .
+                        'or variable contains markup.'
+                    );
                 }
 
-                $xmlRow = mb_substr($document->getContent(), $rowStart, $rowEnd);
+                $rowStart = $this->findRowStart($document->getContent(), $tagPos);
+                $rowEnd = $this->findRowEnd($document->getContent(), $tagPos);
+                if ($rowEnd < $rowStart || empty($rowStart) || empty($rowEnd)) {
+                    throw new RuntimeException
+                    (
+                        'Can not clone row, template variable not found ' .
+                        'or variable contains markup.'
+                    );
+                }
+                $xmlRow = mb_substr($document->getContent(), $rowStart, $rowEnd - $rowStart);
+
+                // Check if there's a cell spanning multiple rows.
+                if (preg_match('#<w:vMerge w:val="restart"/>#', $xmlRow)) {
+                    $extraRowEnd = $rowEnd;
+
+                    while (true) {
+                        $extraRowStart = $this->findRowStart($document->getContent(), $extraRowEnd + 1);
+                        $extraRowEnd = $this->findRowEnd($document->getContent(), $extraRowEnd + 1);
+
+                        // If extraRowEnd is lower then 7, there was no next row found.
+                        if ($extraRowEnd < 7) {
+                            break;
+                        }
+
+                        // If tmpXmlRow doesn't contain continue,
+                        // this row is no longer part of the spanned row.
+                        $tmpXmlRow = mb_substr($document->getContent(), $extraRowStart, $extraRowEnd);
+                        if (
+                            !preg_match('#<w:vMerge/>#', $tmpXmlRow) &&
+                            !preg_match('#<w:vMerge w:val="continue" />#', $tmpXmlRow)
+                        ) {
+                            break;
+                        }
+
+                        // This row was a spanned row,
+                        // update $rowEnd and search for the next row.
+                        $rowEnd = $extraRowEnd;
+                    }
+
+                    $xmlRow = mb_substr($document->getContent(), $rowStart, $rowEnd);
+                }
+
+                $result = mb_substr($document->getContent(), 0, $rowStart);
+
+                for ($i = 1; $i <= $numberOfClones; $i++) {
+                    $result .= preg_replace('/\${(.*?)}/', '\${\\1_' . $i . '}', $xmlRow);
+                }
+
+                $result .= mb_substr($document->getContent(), $rowEnd);
+                $document->setContent($result);
+                $hit = true;
+            } catch (RuntimeException $e) {
             }
-
-            $result = mb_substr($document->getContent(), 0, $rowStart);
-
-            for ($i = 1; $i <= $numberOfClones; $i++) {
-                $result .= preg_replace('/\${(.*?)}/', '\${\\1_' . $i . '}', $xmlRow);
-            }
-
-            $result .= mb_substr($document->getContent(), $rowEnd);
-
-            $document->setContent($result);
         }
+
+        return $hit;
     }
 
     private function normaliseEndTag($value): string
