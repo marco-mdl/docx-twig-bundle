@@ -30,13 +30,12 @@ class DocxStringRenderService
 
     public function cloneAllRows(array $fields, int $numberOfClones): void
     {
-        do {
-            $hit = false;
-            foreach ($fields as $field) {
-                $hit = $this->cloneRow($field, $numberOfClones);
+        foreach ($fields as $field) {
+            $hit = $this->cloneRow($field, $numberOfClones);
+            if ($hit) {
                 break;
             }
-        } while ($hit === true);
+        }
     }
 
     /**
