@@ -220,6 +220,9 @@ class DocxStringRenderService
     private function convertData(array $data): array
     {
         foreach ($data as $key => $datum) {
+            if(empty($datum)){
+                continue;
+            }
             $data[$key] =
                 str_replace(
                     "\n",
