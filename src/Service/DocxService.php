@@ -64,7 +64,7 @@ final class DocxService
 
     private function addXmlDocument($fileName): bool
     {
-        if ($this->zip->fileExists($fileName) !== false) {
+        if ($this->zip->fileExists($fileName)) {
             $this->xmlDocuments[] = new XmlDocument(
                 $fileName,
                 $this->zip->getContentFromName($fileName)
