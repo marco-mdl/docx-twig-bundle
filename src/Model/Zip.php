@@ -42,7 +42,7 @@ class Zip
 
     public function fileExists(string $fileName): bool
     {
-        return (bool)$this->zipArchive->locateName($fileName);
+        return is_int($this->zipArchive->locateName($fileName));
     }
 
     public function getFile(): File
