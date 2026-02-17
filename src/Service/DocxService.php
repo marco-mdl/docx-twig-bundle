@@ -9,11 +9,14 @@ use DeLeo\DocxTwigBundle\Model\Zip;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\File\File;
 
+use function sprintf;
+
 final class DocxService
 {
+    public private(set) ?XmlDocument $relationsXmlDocument = null;
+    public private(set) Zip $zip;
     /** @var XmlDocument[] */
-    protected array $xmlDocuments = [];
-    private Zip $zip;
+    private array $xmlDocuments = [];
 
     public function __construct(File $file)
     {
@@ -22,11 +25,18 @@ final class DocxService
 
         $index = 1;
         while ($this->addXmlDocument($this->getFooterName($index))) {
-            $index++;
+            ++$index;
         }
         $index = 1;
         while ($this->addXmlDocument($this->getHeaderName($index))) {
-            $index++;
+            ++$index;
+        }
+
+        if ($this->zip->fileExists(DocxFiles::RELS)) {
+            $this->relationsXmlDocument = new XmlDocument(
+                DocxFiles::RELS,
+                $this->zip->getContentFromName(DocxFiles::RELS)
+            );
         }
     }
 
@@ -55,10 +65,7 @@ final class DocxService
         }
 
         if ($this->zip->getArchive()->close() === false) {
-            throw new RuntimeException
-            (
-                'Could not close the temp template document!'
-            );
+            throw new RuntimeException('Could not close the temp template document!');
         }
     }
 
@@ -71,9 +78,9 @@ final class DocxService
             );
 
             return true;
-        } else {
-            return false;
         }
+
+        return false;
     }
 
     private function getHeaderName(int $index): string

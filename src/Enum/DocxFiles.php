@@ -8,4 +8,5 @@ class DocxFiles
     const MAIN_DOCUMENT = 'word/document.xml';
     const FOOTER = 'word/footer%d.xml';
     const HEADER = 'word/header%d.xml';
+    const RELS = 'word/_rels/document.xml.rels';
 }
