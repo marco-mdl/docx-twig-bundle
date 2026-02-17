@@ -8,6 +8,8 @@ use Exception;
 use Symfony\Component\HttpFoundation\File\File;
 use Twig\Environment;
 
+use const DIRECTORY_SEPARATOR;
+
 class DocxTwigRenderService
 {
     private const WORD_QUOTES =
@@ -41,9 +43,8 @@ class DocxTwigRenderService
     private Environment $twig;
 
     public function __construct(
-        Environment $twig
-    )
-    {
+        Environment $twig,
+    ) {
         $this->twig = $twig;
     }
 
@@ -54,7 +55,7 @@ class DocxTwigRenderService
     {
         $newFileName = sys_get_temp_dir() .
             DIRECTORY_SEPARATOR .
-            "DocxTwigBundle" .
+            'DocxTwigBundle' .
             md5(uniqid($originalFile->getFilename())) .
             '.' . $originalFile->getExtension();
         copy($originalFile->getRealPath(), $newFileName);
@@ -67,7 +68,6 @@ class DocxTwigRenderService
 
         return $newFile;
     }
-
 
     private function renderXmlDocuments(DocxService $docxService, array $data): void
     {
@@ -86,16 +86,16 @@ class DocxTwigRenderService
     private function cleanXmlDocument(XmlDocument $xmlDocument): void
     {
         $twigVars = [];
-        /** First part catch all the twig tags */
-        preg_match_all("/({{|{%|{#).*?(}}|%}|#})/", $xmlDocument->getContent(), $matches);
+        /* First part catch all the twig tags */
+        preg_match_all('/({{|{%|{#).*?(}}|%}|#})/', $xmlDocument->getContent(), $matches);
         if (empty($matches)) {
             return;
         }
         $matches = $matches[0];
-        //changing office word quote to readable quote for twig
+        // changing office word quote to readable quote for twig
         foreach ($matches as $match) {
-            /** Then get all the xml tags in the twig tags */
-            if (preg_match_all("#(</|<).*?(>|/>)#", $match, $result) !== false) {
+            /* Then get all the xml tags in the twig tags */
+            if (preg_match_all('#(</|<).*?(>|/>)#', $match, $result) !== false) {
                 $tags = implode('', $result[0]);
                 $var = $match;
                 foreach ($result[0] as $tag) {
@@ -107,7 +107,7 @@ class DocxTwigRenderService
             }
             $twigVars[$match] = $this->cleanWordQuotes($value);
         }
-        /** Finally replace twig tags by twig tags without xml inside and with good quote.
+        /* Finally replace twig tags by twig tags without xml inside and with good quote.
          * And put the xml tags find in the twig before the twig */
         $xmlDocument->setContent(strtr($xmlDocument->getContent(), $twigVars));
     }

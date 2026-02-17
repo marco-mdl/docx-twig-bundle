@@ -10,9 +10,8 @@ class XmlDocument
 
     public function __construct(
         string $fileName,
-        string $content
-    )
-    {
+        string $content,
+    ) {
         $this->fileName = $fileName;
         $this->content = $content;
     }
@@ -22,7 +21,7 @@ class XmlDocument
         return $this->fileName;
     }
 
-    public function setFileName(string $fileName): XmlDocument
+    public function setFileName(string $fileName): self
     {
         $this->fileName = $fileName;
 
@@ -34,7 +33,7 @@ class XmlDocument
         return $this->content;
     }
 
-    public function setContent(string $content): XmlDocument
+    public function setContent(string $content): self
     {
         $this->content = $content;
 

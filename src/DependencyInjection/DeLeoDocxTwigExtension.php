@@ -9,9 +9,6 @@ use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 
 class DeLeoDocxTwigExtension extends Extension
 {
-    /**
-     * {@inheritdoc}
-     */
     public function load(array $configs, ContainerBuilder $container)
     {
         $configuration = new Configuration();

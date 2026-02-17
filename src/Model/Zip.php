@@ -6,6 +6,8 @@ use RuntimeException;
 use Symfony\Component\HttpFoundation\File\File;
 use ZipArchive;
 
+use function is_int;
+
 class Zip
 {
     private ZipArchive $zipArchive;
@@ -14,18 +16,10 @@ class Zip
     public function __construct(File $file)
     {
         $this->file = $file;
-        $this->zipArchive = new ZipArchive;
+        $this->zipArchive = new ZipArchive();
         if ($this->zipArchive->open($file->getRealPath()) !== true) {
-            throw new RuntimeException
-            (
-                'Failed to open the temp template document!'
-            );
+            throw new RuntimeException('Failed to open the temp template document!');
         }
-    }
-
-    public function getArchive(): ZipArchive
-    {
-        return $this->zipArchive;
     }
 
     public function __destruct()
@@ -33,6 +27,11 @@ class Zip
         if ($this->zipArchive->status !== 0) {
             $this->zipArchive->close();
         }
+    }
+
+    public function getArchive(): ZipArchive
+    {
+        return $this->zipArchive;
     }
 
     public function getContentFromName(string $name): string

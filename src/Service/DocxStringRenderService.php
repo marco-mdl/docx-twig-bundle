@@ -2,7 +2,6 @@
 
 namespace DeLeo\DocxTwigBundle\Service;
 
-use DeLeo\DocxTwigBundle\Enum\DocxFiles;
 use DeLeo\DocxTwigBundle\Model\PropertiesModel;
 use DeLeo\DocxTwigBundle\Model\XmlDocument;
 use DOMDocument;
@@ -41,7 +40,7 @@ class DocxStringRenderService
 
     public function setQrImage(string $qrCodeUrl): void
     {
-        if($this->hasQrImage() === false){
+        if ($this->hasQrImage() === false) {
             return;
         }
         $fileName = 'word/' . $this->extractTargetFromRelsXml(

@@ -4,9 +4,9 @@ namespace DeLeo\DocxTwigBundle\Enum;
 
 class DocxFiles
 {
-    const PROPERTIES = 'docProps/core.xml';
-    const MAIN_DOCUMENT = 'word/document.xml';
-    const FOOTER = 'word/footer%d.xml';
-    const HEADER = 'word/header%d.xml';
-    const RELS = 'word/_rels/document.xml.rels';
+    public const PROPERTIES = 'docProps/core.xml';
+    public const MAIN_DOCUMENT = 'word/document.xml';
+    public const FOOTER = 'word/footer%d.xml';
+    public const HEADER = 'word/header%d.xml';
+    public const RELS = 'word/_rels/document.xml.rels';
 }
