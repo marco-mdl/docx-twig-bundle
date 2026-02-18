@@ -5,6 +5,7 @@ namespace DeLeo\DocxTwigBundle\Service;
 use DeLeo\DocxTwigBundle\Model\PropertiesModel;
 use DeLeo\DocxTwigBundle\Model\XmlDocument;
 use DOMDocument;
+use DOMNodeList;
 use DOMXPath;
 use Exception;
 use RuntimeException;
@@ -44,9 +45,9 @@ class DocxStringRenderService
             return;
         }
         $fileName = 'word/' . $this->extractTargetFromRelsXml(
-            $this->docxService->relationsXmlDocument->getContent(),
-            $this->relationId,
-        );
+                $this->docxService->relationsXmlDocument->getContent(),
+                $this->relationId,
+            );
 
         $this->docxService->zip->filePutContent($fileName, $qrCodeUrl);
     }
@@ -187,13 +188,26 @@ class DocxStringRenderService
         $xp->registerNamespace('pic', 'http://schemas.openxmlformats.org/drawingml/2006/picture');
         $xp->registerNamespace('r', 'http://schemas.openxmlformats.org/officeDocument/2006/relationships');
 
-        $q = sprintf(
+        $expressions = [
+            '//w:pict//v:shape[@alt=%1$s]//v:imagedata/@r:id',
             '//pic:pic[(.//wp:docPr[@name=%1$s]) or (.//pic:cNvPr[@name=%1$s])]//a:blip/@r:embed',
-            $this->xpathLiteral($imageName)
-        );
+        ];
+        foreach ($expressions as $expression) {
+            $query = sprintf($expression, $this->xpathLiteral(strtolower($imageName)));
 
-        $nodes = $xp->query($q);
-        if ($nodes === false || $nodes->length === 0) {
+            $nodes = $xp->query($query);
+            if ($nodes instanceof DOMNodeList && $nodes->length > 0) {
+                break;
+            }
+            $query = sprintf($expression, $this->xpathLiteral(strtoupper($imageName)));
+
+            $nodes = $xp->query($query);
+            if ($nodes instanceof DOMNodeList && $nodes->length > 0) {
+                break;
+            }
+        }
+
+        if (!$nodes instanceof DOMNodeList || $nodes->length === 0) {
             return null;
         }
 
@@ -204,13 +218,13 @@ class DocxStringRenderService
     {
         foreach ($this->docxService->getXmlDocuments() as $document) {
             $document->setContent(str_replace(
-                [
-                    $this->normaliseStartTag($blockName),
-                    $this->normaliseEndTag($blockName),
-                ],
-                '',
-                $document->getContent()
-            )
+                    [
+                        $this->normaliseStartTag($blockName),
+                        $this->normaliseEndTag($blockName),
+                    ],
+                    '',
+                    $document->getContent()
+                )
             );
         }
     }
@@ -222,10 +236,10 @@ class DocxStringRenderService
                 preg_quote($this->normaliseStartTag($blockName), '@') . '(.*)' .
                 preg_quote($this->normaliseEndTag($blockName), '@') . '@s';
             $document->setContent(preg_replace(
-                $regEx,
-                '',
-                $document->getContent()
-            )
+                    $regEx,
+                    '',
+                    $document->getContent()
+                )
             );
         }
     }
