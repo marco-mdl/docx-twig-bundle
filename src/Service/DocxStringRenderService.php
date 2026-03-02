@@ -191,6 +191,7 @@ class DocxStringRenderService
         $expressions = [
             '//w:pict//v:shape[@alt=%1$s]//v:imagedata/@r:id',
             '//pic:pic[(.//wp:docPr[@name=%1$s]) or (.//pic:cNvPr[@name=%1$s])]//a:blip/@r:embed',
+            '//*[(wp:docPr[@descr=%1$s])]//a:blip/@r:embed',
         ];
         foreach ($expressions as $expression) {
             $query = sprintf($expression, $this->xpathLiteral(strtolower($imageName)));
